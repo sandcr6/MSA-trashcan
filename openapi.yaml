@@ -1,0 +1,61 @@
+openapi: 3.0.3
+info:
+  title: Trash Can App
+  description: Next generation trash management is here!
+  version: 0.1.0
+
+paths:
+  /cans:
+    get:
+      description: Returns all Trash Cans in the system
+      responses:
+        '200':
+          description: A list of Trash Cans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrashCan'
+    post:
+      description: Add a new TrashCan
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrashCan'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrashCan'
+        '400':
+          description: Bad TrashCan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+components:
+  schemas:
+    TrashCan:
+      type: object
+      properties:
+        id:
+          type: integer
+        deployed:
+          type: boolean
+        power:
+          type: string
+        lat:
+          type: number
+        lon:
+          type: number
+        capacity:
+          type: integer
+      required:
+        - id

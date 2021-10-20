@@ -17,3 +17,77 @@ VERSION = "0.1"
 def version():
     """ Root IRI returns the API version """
     return jsonify(version=VERSION)
+
+
+wcans = {}
+
+
+@app.route('/waste/cans', methods=['GET', 'POST'])
+def cans():
+    """ /cans collection allows POST of new cans and GET of all cans """
+    if request.method == 'POST':
+        can = request.get_json()
+        result = validate_can(can)
+        if result:
+            app.logger.warn(result)
+            return jsonify(error=result), 400
+        wcans[can["id"]] = can
+        response = jsonify(can)
+        response.status_code = 201
+        response.headers['Location'] = "/waste/cans/" + str(can["id"])
+        response.autocorrect_location_header = False
+        return response
+    if request.method == 'GET':
+        return jsonify(list(wcans.values()))
+    return jsonify(error="bad HTTP verb, only GET and POST supported"), 400
+
+
+
+def validate_can(can):
+    """ Check for required can fields and settings
+            returns empty string if can is valid
+            returns an error string describing the error otherwise
+    """
+    try:
+        #Test id
+        can["id"] = int(can["id"])
+        if can["id"] < 0 or can["id"] > 999999999:
+            raise ValueError("can.id out of range [0..999999999]")
+        #Test deployed
+        if can["deployed"] == True:
+            can["deployed"] = True
+        elif can["deployed"] == False:
+            can["deployed"] = False
+        else:
+            raise ValueError("can.deployed must be Boolean (True, False)")
+        #Test capacity
+        can["capacity"] = float(can["capacity"])
+        if can["capacity"] <= 0.0 or can["capacity"] > 9999:
+            raise ValueError("can.capacity out of range (0.0..9999.0]")
+        #Test lat
+        can["lat"] = float(can["lat"])
+        if can["lat"] < -90.0 or can["lat"] > 90.0:
+            raise ValueError("can.lat out of range [-90.0..90.0]")
+        #Test lon
+        can["lon"] = float(can["lon"])
+        if can["lon"] < -180.0 or can["lon"] > 180.0:
+            raise ValueError("can.lon out of range [-180.0..180.0]")
+        #Test power
+        if "power" not in can:
+            raise ValueError("field 'power' must be present")
+    except (OSError, SystemError, Warning, ValueError) as ex:
+        return str(ex)
+    return "" #no errors
+
+@app.route('/waste/cans/<int:can_id>', methods=['GET', 'DELETE'])
+def dcan(can_id):
+    """ can id can be used as a /cans path param to GET/DELETE a single can """
+    if can_id not in wcans:
+        return jsonify(error="trash can id not found"), 404
+    if request.method == 'GET':
+        return jsonify(wcans[can_id])
+    if request.method == 'DELETE':
+        del wcans[can_id]
+        return ('', 204)
+    return jsonify(error="bad HTTP verb, only GET and DELETE supported"), 400
+

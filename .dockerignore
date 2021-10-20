@@ -1,0 +1,10 @@
+.dockerignore
+.git/
+.gitignore
+Dockerfile
+__pycache__/
+inv_py36dev/
+openapi.yaml
+requirements.txt
+trash-can-app-client/
+*.pyc
